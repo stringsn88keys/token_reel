@@ -2,3 +2,4 @@
 *.gem
 *_frames/
 /spec/tmp/
+/Gemfile.lock
