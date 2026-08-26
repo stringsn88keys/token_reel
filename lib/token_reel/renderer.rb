@@ -25,20 +25,20 @@ module TokenReel
       @palette = Theme.fetch(config.theme)
       @font = Fonts.resolve!(config.font)
       calibrate!
-      @total_lines = wrap_body(timeline.final_state).size
-      # The reasoning trace only ever appears mid-stream (it's replaced
-      # by the response once real output starts), so it's excluded from
-      # sizing unless it's actually used -- keeps canvas height
-      # unchanged for the common case of no --reasoning.
-      if timeline.reasoning_tokens.any?
-        @total_lines = [@total_lines, wrap_body(timeline.max_reasoning_state).size].max
-      end
+      # The window is a fixed config.rows lines tall, like a real
+      # console -- every frame shares this height regardless of how
+      # much text it holds.
+      @total_lines = @config.rows
       @width = @config.cols * char_w + PAD_X * 2
       @height = HEADER_H + PAD_Y * 2 + total_lines * char_h
     end
 
     def render(state, out_path)
       lines = wrap_body(state)
+      # Once a frame's content outgrows the window, scroll: keep only
+      # the most recent total_lines lines, same as a real terminal
+      # dropping its oldest lines off the top.
+      lines = lines.last(total_lines) if lines.size > total_lines
       pad = [total_lines - lines.size, 0].max
       lines += [{ text: "", color: @palette[:fg] }] * pad
 

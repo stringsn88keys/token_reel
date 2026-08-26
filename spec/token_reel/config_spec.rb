@@ -34,6 +34,11 @@ RSpec.describe TokenReel::Config do
     expect { config.validate! }.to raise_error(TokenReel::ConfigError, /cols/)
   end
 
+  it "rejects too-short a console" do
+    config.rows = 2
+    expect { config.validate! }.to raise_error(TokenReel::ConfigError, /rows/)
+  end
+
   it "rejects a negative reasoning_tps" do
     config.reasoning_tps = -1
     expect { config.validate! }.to raise_error(TokenReel::ConfigError, /reasoning_tps/)

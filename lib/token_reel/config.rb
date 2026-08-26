@@ -6,7 +6,7 @@ module TokenReel
   class Config
     attr_accessor :prompt, :response, :reasoning,
                   :tps, :ttft, :prompt_tps, :reasoning_tps, :unit,
-                  :cols, :font, :font_size, :fps,
+                  :cols, :rows, :font, :font_size, :fps,
                   :theme, :hold, :loop_count,
                   :label, :thinking_label, :title, :cursor_char,
                   :out, :keep_frames
@@ -20,7 +20,9 @@ module TokenReel
       @prompt_tps     = 0       # 0 = prompt appears instantly, fully typed
       @reasoning_tps  = 0       # 0 = same rate as tps
       @unit           = :word   # :word or :char
-      @cols           = 70      # wrap width, in characters
+      @cols           = 80      # console width, in characters (classic terminal default: 80x25)
+      @rows           = 25      # console height, in lines -- once content grows past this, the
+                                 # window scrolls (oldest lines drop off the top), like a real terminal
       @font           = nil     # nil = auto-detect an available monospace font, see Fonts
       @font_size      = 20
       @fps            = 12
@@ -43,6 +45,7 @@ module TokenReel
       raise ConfigError, "prompt_tps can't be negative" if prompt_tps.to_f.negative?
       raise ConfigError, "reasoning_tps can't be negative" if reasoning_tps.to_f.negative?
       raise ConfigError, "cols must be >= 20" if cols.to_i < 20
+      raise ConfigError, "rows must be >= 3" if rows.to_i < 3
       raise ConfigError, "fps must be between 1 and 50" unless (1..50).cover?(fps.to_i)
       raise ConfigError, "font_size must be >= 8" if font_size.to_i < 8
       raise ConfigError, "hold can't be negative" if hold.to_f.negative?

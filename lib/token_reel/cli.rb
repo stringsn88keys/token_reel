@@ -54,7 +54,9 @@ module TokenReel
         o.separator ""
         o.separator "Look:"
         o.on("--theme THEME", %w[dark matrix light solarized], "Color theme (default: #{config.theme})") { |v| config.theme = v.to_sym }
-        o.on("--cols N", Integer, "Terminal width in characters (default: #{config.cols})") { |v| config.cols = v }
+        o.on("--cols N", Integer, "Console width, in characters (default: #{config.cols})") { |v| config.cols = v }
+        o.on("--rows N", Integer, "Console height, in lines; once content grows past this the window " \
+                                   "scrolls, like a real terminal (default: #{config.rows})") { |v| config.rows = v }
         o.on("--font-size N", Integer, "Font point size (default: #{config.font_size})") { |v| config.font_size = v }
         o.on("--font NAME", "ImageMagick font name (default: auto-detect a monospace font)") { |v| config.font = v }
         o.on("--label STRING", "Prompt prefix (default: #{config.label.inspect})") { |v| config.label = v }

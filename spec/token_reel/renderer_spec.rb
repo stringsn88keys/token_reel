@@ -67,4 +67,53 @@ RSpec.describe TokenReel::Renderer do
       expect(diff.to_f).to be < 800
     end
   end
+
+  it "sizes the canvas to config.rows, not to how much content there is" do
+    short = TokenReel::Config.new
+    short.prompt = "x"
+    short.response = "one short line"
+    short.tps = 1000
+    short.ttft = 0
+
+    tall = TokenReel::Config.new
+    tall.prompt = "x"
+    tall.response = Array.new(40) { |i| "line #{i}" }.join("\n")
+    tall.tps = 1000
+    tall.ttft = 0
+
+    [short, tall].each do |config|
+      timeline = TokenReel::Timeline.new(config)
+      renderer = described_class.new(config, timeline)
+
+      expect(renderer.total_lines).to eq(config.rows)
+      expect(renderer.instance_variable_get(:@height))
+        .to eq(described_class::HEADER_H + described_class::PAD_Y * 2 + config.rows * renderer.char_h)
+
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "frame.png")
+        renderer.render(timeline.final_state, path)
+        out, = Open3.capture3("identify", "-format", "%h", path)
+        expect(out.to_i).to eq(renderer.instance_variable_get(:@height))
+      end
+    end
+  end
+
+  it "scrolls once a frame's content outgrows the console, instead of overflowing it" do
+    config = TokenReel::Config.new
+    config.prompt = "x"
+    config.rows = 6
+    config.response = Array.new(20) { |i| "line #{i}" }.join("\n")
+    config.tps = 1000
+    config.ttft = 0
+
+    timeline = TokenReel::Timeline.new(config)
+    renderer = described_class.new(config, timeline)
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "frame.png")
+      renderer.render(timeline.final_state, path)
+      out, = Open3.capture3("identify", "-format", "%h", path)
+      expect(out.to_i).to eq(described_class::HEADER_H + described_class::PAD_Y * 2 + config.rows * renderer.char_h)
+    end
+  end
 end

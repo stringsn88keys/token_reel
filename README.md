@@ -109,7 +109,8 @@ Run `token_reel --help` for the full flag list. The important ones:
 | `--reasoning-tps N` | reasoning typing speed, `0` = same as `--tps` | `0` |
 | `--unit word\|char` | stream whole words or single characters | `word` |
 | `--theme dark\|matrix\|light\|solarized` | color scheme | `dark` |
-| `--cols N` | wrap width, in characters | `70` |
+| `--cols N` | console width, in characters | `80` |
+| `--rows N` | console height, in lines (scrolls once content grows past this) | `25` |
 | `--font NAME` | exact ImageMagick font name | auto-detected monospace |
 | `--fps N` | GIF frame rate | `12` |
 | `--hold N` | seconds to hold on the finished frame | `1.5` |
