@@ -33,4 +33,14 @@ RSpec.describe TokenReel::Config do
     config.cols = 5
     expect { config.validate! }.to raise_error(TokenReel::ConfigError, /cols/)
   end
+
+  it "rejects a negative reasoning_tps" do
+    config.reasoning_tps = -1
+    expect { config.validate! }.to raise_error(TokenReel::ConfigError, /reasoning_tps/)
+  end
+
+  it "is valid with reasoning left blank (it's optional)" do
+    expect(config.reasoning).to eq("")
+    expect { config.validate! }.not_to raise_error
+  end
 end

@@ -57,4 +57,47 @@ RSpec.describe TokenReel::Timeline do
     state = timeline.state_at(timeline.duration + 100)
     expect(state.response_text).to eq(timeline.response_full)
   end
+
+  context "with no reasoning text configured" do
+    it "goes straight from thinking to streaming, matching the pre-reasoning timeline" do
+      expect(timeline.reasoning_end_t).to eq(timeline.thinking_end_t)
+    end
+  end
+
+  context "with reasoning text configured" do
+    let(:config) do
+      c = TokenReel::Config.new
+      c.prompt = "hi there"
+      c.reasoning = "hmm well"
+      c.response = "one two three"
+      c.tps = 2.0
+      c.ttft = 1.0
+      c.reasoning_tps = 4.0 # 0.25s per token
+      c.prompt_tps = 0
+      c.hold = 0.5
+      c
+    end
+
+    it "streams reasoning tokens between the thinking pause and the response" do
+      state = timeline.state_at(timeline.thinking_end_t + 0.26) # just after the 1st token's 0.25s interval
+      expect(state.phase).to eq(:reasoning)
+      expect(state.reasoning_text).to eq("hmm ")
+      expect(state.response_text).to eq("")
+    end
+
+    it "switches to streaming, with the reasoning text gone, once reasoning finishes" do
+      state = timeline.state_at(timeline.reasoning_end_t + 0.01)
+      expect(state.phase).to eq(:streaming)
+      expect(state.reasoning_text).to eq("")
+    end
+
+    it "excludes the reasoning trace from the fully-revealed final_state" do
+      expect(timeline.final_state.reasoning_text).to eq("")
+      expect(timeline.final_state.response_text).to eq(timeline.response_full)
+    end
+
+    it "exposes the fully-revealed reasoning trace via max_reasoning_state, for canvas sizing" do
+      expect(timeline.max_reasoning_state.reasoning_text).to eq(timeline.reasoning_full)
+    end
+  end
 end

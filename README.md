@@ -7,7 +7,13 @@ for READMEs, blog posts, and talks that want a realistic-looking demo
 without a real model or a real screen recorder.
 
 Everything is driven by ImageMagick's `convert`/`magick` under the
-hood, so that needs to be installed and on `PATH`.
+hood, so that needs to be installed and on `PATH`. Text is always
+rendered in a monospace font -- by default TokenReel auto-detects one
+from whatever ImageMagick has installed (DejaVu Sans Mono, Menlo,
+Consolas, Courier New, ...); pass `--font NAME` with an exact name from
+`magick -list font` to pick a specific one. This matters beyond looks:
+column wrapping, cursor placement, and code syntax highlighting all
+assume every glyph is the same width.
 
 ## Install
 
@@ -24,9 +30,12 @@ Requires ImageMagick (`brew install imagemagick` / `apt install imagemagick`).
 ```bash
 token_reel \
   --prompt "Refactor this method to be tail-recursive" \
-  --response "Sure -- here's a tail-recursive version:\n\ndef sum(n, acc = 0)\n  return acc if n.zero?\n  sum(n - 1, acc + n)\nend" \
+  --response $'Sure -- here\'s a tail-recursive version:\n\ndef sum(n, acc = 0)\n  return acc if n.zero?\n  sum(n - 1, acc + n)\nend' \
   --tps 14 --ttft 0.8 --theme matrix -o demo.gif
 ```
+
+Note the `$'...'` (ANSI-C) quoting -- plain `"..."` leaves `\n` as a literal
+backslash-n instead of a real newline.
 
 Read from files instead of inline strings:
 
@@ -45,6 +54,51 @@ model's first streamed token arriving -- it's latency, not throughput.
 EOF
 ```
 
+Or write the whole exchange as one Markdown file and pass `-m`/`--markdown`.
+Get a starter file with `--init-markdown` (writes `exchange.md` by default,
+or pass a path -- it refuses to overwrite an existing file):
+
+```bash
+token_reel --init-markdown           # writes ./exchange.md
+token_reel --init-markdown demo.md   # writes ./demo.md
+```
+
+````markdown
+## Prompt
+
+Refactor this method to be tail-recursive.
+
+## Reasoning
+
+The recursive call isn't in tail position because of the addition
+after it returns -- an accumulator fixes that.
+
+## Output
+
+Sure -- here's a tail-recursive version:
+
+```ruby
+def sum(n, acc = 0)
+  return acc if n.zero?
+  sum(n - 1, acc + n)
+end
+```
+````
+
+```bash
+token_reel -m exchange.md --tps 14 --ttft 0.8 --theme matrix -o demo.gif
+```
+
+Headings are case-insensitive and also accept `User`/`Input`/`Question` for
+the prompt, `Thinking`/`Thought` for reasoning, and `Response`/`Answer`/
+`Assistant` for the output. A heading is only recognized outside of a
+fenced code block, so a `# Output`-style comment inside example code
+won't be mistaken for a section. The `## Reasoning` section is optional;
+when present it streams first (as if the model were thinking out loud)
+and is then replaced by the response once real output starts. Code
+fences (` ``` `) in any section -- from `-m`, `-r`/`-R`, or `--stdin` --
+are syntax-highlighted and rendered without the literal backtick lines.
+
 Run `token_reel --help` for the full flag list. The important ones:
 
 | flag | meaning | default |
@@ -52,9 +106,11 @@ Run `token_reel --help` for the full flag list. The important ones:
 | `--tps N` | response tokens/sec | `8` |
 | `--ttft N` | seconds of "thinking" before the first token | `0.6` |
 | `--prompt-tps N` | prompt typing speed, `0` = appears instantly | `0` |
+| `--reasoning-tps N` | reasoning typing speed, `0` = same as `--tps` | `0` |
 | `--unit word\|char` | stream whole words or single characters | `word` |
 | `--theme dark\|matrix\|light\|solarized` | color scheme | `dark` |
 | `--cols N` | wrap width, in characters | `70` |
+| `--font NAME` | exact ImageMagick font name | auto-detected monospace |
 | `--fps N` | GIF frame rate | `12` |
 | `--hold N` | seconds to hold on the finished frame | `1.5` |
 | `-o, --out PATH` | output GIF path | `token_reel.gif` |
@@ -65,12 +121,13 @@ Run `token_reel --help` for the full flag list. The important ones:
 require "token_reel"
 
 TokenReel.generate(
-  prompt:   "What's the airspeed velocity of an unladen swallow?",
-  response: "African or European swallow?",
-  tps:      10,
-  ttft:     0.4,
-  theme:    :dark,
-  out:      "swallow.gif"
+  prompt:    "What's the airspeed velocity of an unladen swallow?",
+  reasoning: "This is the classic Monty Python bridgekeeper question.",
+  response:  "African or European swallow?",
+  tps:       10,
+  ttft:      0.4,
+  theme:     :dark,
+  out:       "swallow.gif"
 )
 ```
 
@@ -96,9 +153,12 @@ TokenReel::Generator.new(config).generate!
 2. Once the prompt is fully shown, `--ttft` seconds pass with a
    blinking-cursor "thinking..." indicator -- this is your simulated
    time to first token.
-3. The response then streams in one token (word or character,
+3. If reasoning text was given, it streams in next at `--reasoning-tps`
+   tokens/sec (or `--tps` if that's unset), then disappears, replaced by
+   the response -- like a chat UI's collapsible thinking trace.
+4. The response then streams in one token (word or character,
    per `--unit`) every `1 / --tps` seconds.
-4. The final frame holds for `--hold` seconds before the GIF loops.
+5. The final frame holds for `--hold` seconds before the GIF loops.
 
 Frames are sampled at `--fps` and identical consecutive frames are
 collapsed into a single frame with a longer delay, so a long `--ttft`
