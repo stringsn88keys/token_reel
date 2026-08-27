@@ -114,6 +114,8 @@ Run `token_reel --help` for the full flag list. The important ones:
 | `--font NAME` | exact ImageMagick font name | auto-detected monospace |
 | `--fps N` | GIF frame rate | `12` |
 | `--hold N` | seconds to hold on the finished frame | `1.5` |
+| `--variability` | jitter each token's delay +/-10/20/30% (normal distribution) for a more natural, less metronomic stream | off |
+| `--seed N` | RNG seed for `--variability`, for reproducible output | random |
 | `-o, --out PATH` | output GIF path | `token_reel.gif` |
 
 ## Ruby API
@@ -164,6 +166,14 @@ TokenReel::Generator.new(config).generate!
 Frames are sampled at `--fps` and identical consecutive frames are
 collapsed into a single frame with a longer delay, so a long `--ttft`
 or a slow `--tps` doesn't blow up the frame count or file size.
+
+By default every token in a stream lands at an exact, metronomic
+interval. Pass `--variability` to jitter each token's delay instead:
+per token, one of +/-10%, +/-20%, or +/-30% is picked at random and
+applied as a normally-distributed offset around the base interval, so
+some tokens land a little early and others a little late -- closer to
+how a real model streams. Pair it with `--seed N` to reproduce the
+exact same jittered timeline across runs.
 
 ## Releasing
 

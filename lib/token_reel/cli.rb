@@ -50,6 +50,8 @@ module TokenReel
         o.on("--hold N", Float, "Seconds to hold the final frame (default: #{config.hold})") { |v| config.hold = v }
         o.on("--fps N", Integer, "GIF frame rate (default: #{config.fps})") { |v| config.fps = v }
         o.on("--loop N", Integer, "GIF loop count, 0 = forever (default: #{config.loop_count})") { |v| config.loop_count = v }
+        o.on("--variability", "Jitter each token's delay by a random +/-10/20/30% (normal distribution)") { config.variability = true }
+        o.on("--seed N", Integer, "RNG seed for --variability, for reproducible output (default: random)") { |v| config.seed = v }
 
         o.separator ""
         o.separator "Look:"

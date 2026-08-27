@@ -100,4 +100,56 @@ RSpec.describe TokenReel::Timeline do
       expect(timeline.max_reasoning_state.reasoning_text).to eq(timeline.reasoning_full)
     end
   end
+
+  context "with variability enabled" do
+    let(:config) do
+      c = TokenReel::Config.new
+      c.prompt = "hi there"
+      c.response = "one two three four five six seven eight nine ten"
+      c.tps = 2.0        # 0.5s per token, unjittered
+      c.ttft = 1.0
+      c.prompt_tps = 0
+      c.hold = 0.5
+      c.variability = true
+      c.seed = 42
+      c
+    end
+
+    it "jitters the response stream duration away from the exact unjittered total" do
+      unjittered_total = 0.5 * 10 # tps * token count
+      expect(timeline.stream_end_t - timeline.reasoning_end_t).not_to eq(unjittered_total)
+    end
+
+    it "keeps the jittered total within the max +/-30% per-token bound" do
+      # Each token's delay is clamped to +/-30% of its base interval, so
+      # the summed total can't drift past that bound either.
+      total = timeline.stream_end_t - timeline.reasoning_end_t
+      expect(total).to be_within(0.5 * 10 * 0.30).of(0.5 * 10)
+    end
+
+    it "still reaches :done with the full response once the stream ends" do
+      state = timeline.state_at(timeline.stream_end_t)
+      expect(state.phase).to eq(:done)
+      expect(state.response_text).to eq(timeline.response_full)
+    end
+
+    it "produces the same timeline deterministically for the same seed" do
+      other = described_class.new(config)
+      expect(other.stream_end_t).to eq(timeline.stream_end_t)
+    end
+
+    it "produces a different timeline for a different seed" do
+      original_stream_end_t = timeline.stream_end_t # force memoization before mutating the seed
+      config.seed = 43
+      other = described_class.new(config)
+      expect(other.stream_end_t).not_to eq(original_stream_end_t)
+    end
+  end
+
+  context "with variability disabled (the default)" do
+    it "matches the exact, non-jittered timeline" do
+      expect(config.variability).to eq(false)
+      expect(timeline.stream_end_t - timeline.reasoning_end_t).to eq(0.5 * 3)
+    end
+  end
 end

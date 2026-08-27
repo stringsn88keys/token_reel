@@ -9,7 +9,8 @@ module TokenReel
                   :cols, :rows, :font, :font_size, :fps,
                   :theme, :hold, :loop_count,
                   :label, :thinking_label, :title, :cursor_char,
-                  :out, :keep_frames
+                  :out, :keep_frames,
+                  :variability, :seed
 
     def initialize
       @prompt         = ""
@@ -35,6 +36,8 @@ module TokenReel
       @cursor_char    = "\u258A" # "▊"
       @out            = "token_reel.gif"
       @keep_frames    = false
+      @variability    = false   # jitter each token's delay by a random +/-10/20/30% (normal distribution)
+      @seed           = nil     # RNG seed for --variability; nil = a fresh random seed each run
     end
 
     def validate!
