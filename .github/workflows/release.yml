@@ -1,7 +1,11 @@
 name: Release
 
-# Publishes to RubyGems whenever a "v*" tag is pushed (see
-# .github/workflows/version-bump.yml, which creates that tag). Uses
+# Publishes to RubyGems whenever a "v*" tag is pushed, and is also
+# called directly as a reusable workflow by version-bump.yml right
+# after it creates that tag. (A tag pushed by the default GITHUB_TOKEN
+# does NOT trigger other workflows, so the push-tags trigger alone
+# never fires for tags version-bump.yml creates -- the workflow_call
+# path is what actually runs the release in that case.) Uses
 # RubyGems' Trusted Publishing (OIDC) -- no API key stored in this repo.
 # One-time setup required on rubygems.org: Settings > Trusted Publishers
 # on the token_reel gem, with owner "stringsn88keys", repository
@@ -11,6 +15,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_call:
+    inputs:
+      ref:
+        description: "Tag/ref to check out and release. Defaults to the triggering ref."
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag to check out and release (e.g. v0.3.0). Defaults to the ref this is run against."
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -21,6 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Install ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick
@@ -47,6 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ inputs.ref || github.ref }}
           persist-credentials: false
 
       - uses: ruby/setup-ruby@v1
