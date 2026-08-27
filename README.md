@@ -165,6 +165,37 @@ Frames are sampled at `--fps` and identical consecutive frames are
 collapsed into a single frame with a longer delay, so a long `--ttft`
 or a slow `--tps` doesn't blow up the frame count or file size.
 
+## Releasing
+
+Version bumps and RubyGems publishing are both automated, driven off
+PR labels:
+
+1. Label a PR `major`, `minor`, or `patch` (semver meaning, same as
+   the `rake version:*` tasks below) before merging it to `main`.
+2. On merge, [`version-bump.yml`](.github/workflows/version-bump.yml)
+   bumps `lib/token_reel/version.rb` accordingly, commits it to
+   `main`, and pushes a matching `vX.Y.Z` tag.
+3. That tag push triggers [`release.yml`](.github/workflows/release.yml),
+   which runs the test suite and then publishes the gem to RubyGems
+   using [Trusted Publishing](https://guides.rubygems.org/trusted-publishing/)
+   (OIDC -- no API key stored in this repo).
+
+A PR merged without one of those labels doesn't bump the version or
+release anything.
+
+Trusted Publishing needs a one-time setup on rubygems.org, under the
+gem's *Trusted Publishers* settings: owner `stringsn88keys`, repository
+`token_reel`, workflow filename `release.yml`, environment `release`.
+
+The version can also be bumped locally without releasing:
+
+```bash
+rake version         # print the current version
+rake version:patch   # x.x.X -- backwards-compatible fixes
+rake version:minor   # x.X.0 -- backwards-compatible features
+rake version:major   # X.0.0 -- breaking changes
+```
+
 ## License
 
 MIT
