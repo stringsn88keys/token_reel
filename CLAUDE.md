@@ -7,7 +7,7 @@ CLI's rendering behavior), regenerate the demo GIF from `demo/exchange.md`
 and make sure it's embedded in `README.md`:
 
 ```bash
-bundle exec exe/token_reel -m demo/exchange.md --tps 14 --ttft 0.8 --theme matrix -o demo/token_reel.gif
+bundle exec exe/token_reel -m demo/exchange.md --tps 14 --ttft 0.8 -o demo/token_reel.gif
 ```
 
 - Input: `demo/exchange.md` (the sample prompt/reasoning/response exchange).

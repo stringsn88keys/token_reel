@@ -22,7 +22,7 @@ assume every glyph is the same width.
 Generated from [`demo/exchange.md`](demo/exchange.md) via:
 
 ```bash
-token_reel -m demo/exchange.md --tps 14 --ttft 0.8 --theme matrix -o demo/token_reel.gif
+token_reel -m demo/exchange.md --tps 14 --ttft 0.8 -o demo/token_reel.gif
 ```
 
 ## Install
