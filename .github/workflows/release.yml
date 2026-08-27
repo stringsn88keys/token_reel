@@ -21,6 +21,12 @@ on:
         description: "Tag/ref to check out and release. Defaults to the triggering ref."
         required: false
         type: string
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag to check out and release (e.g. v0.3.0). Defaults to the ref this is run against."
+        required: false
+        type: string
 
 permissions:
   contents: read
