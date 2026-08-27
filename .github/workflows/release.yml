@@ -1,0 +1,57 @@
+name: Release
+
+# Publishes to RubyGems whenever a "v*" tag is pushed (see
+# .github/workflows/version-bump.yml, which creates that tag). Uses
+# RubyGems' Trusted Publishing (OIDC) -- no API key stored in this repo.
+# One-time setup required on rubygems.org: Settings > Trusted Publishers
+# on the token_reel gem, with owner "stringsn88keys", repository
+# "token_reel", workflow filename "release.yml", environment "release".
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Verify build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Run specs
+        run: bundle exec rake spec
+
+      - name: Build gem
+        run: gem build token_reel.gemspec
+
+  release:
+    name: Publish to RubyGems
+    needs: test
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: ruby
+
+      - uses: rubygems/release-gem@v1

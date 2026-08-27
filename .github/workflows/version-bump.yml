@@ -1,0 +1,62 @@
+name: Version Bump
+
+# Bumps the gem version when a PR is merged to main with a "major",
+# "minor", or "patch" label, then tags the resulting commit. Pushing
+# that tag triggers .github/workflows/release.yml, which publishes the
+# gem to RubyGems.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine version bump from labels
+        id: bump
+        env:
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          has_label() { echo "$LABELS_JSON" | jq -e --arg l "$1" 'index($l) != null' > /dev/null; }
+          if has_label major; then
+            part=major
+          elif has_label minor; then
+            part=minor
+          elif has_label patch; then
+            part=patch
+          else
+            part=""
+          fi
+          echo "part=$part" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.bump.outputs.part != ''
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: ruby/setup-ruby@v1
+        if: steps.bump.outputs.part != ''
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Bump version
+        if: steps.bump.outputs.part != ''
+        run: bundle exec rake "version:${{ steps.bump.outputs.part }}"
+
+      - name: Commit and tag
+        if: steps.bump.outputs.part != ''
+        run: |
+          new_version=$(ruby -e 'puts File.read("lib/token_reel/version.rb")[/VERSION = "(.*)"/, 1]')
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump version to ${new_version}"
+          git tag "v${new_version}"
+          git push origin main "v${new_version}"

@@ -5,7 +5,8 @@ require_relative "lib/token_reel/version"
 Gem::Specification.new do |spec|
   spec.name        = "token_reel"
   spec.version     = TokenReel::VERSION
-  spec.authors     = ["Thomas"]
+  spec.authors     = ["Thomas Powell"]
+  spec.email       = ["twilliampowell@gmail.com"]
   spec.summary     = "Render terminal-style GIFs of an LLM prompt/response, streamed at a chosen tokens/sec and time-to-first-token"
   spec.description = <<~DESC
     token_reel renders a "CLI demo"-style animated GIF of a prompt being
