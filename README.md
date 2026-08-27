@@ -15,6 +15,16 @@ Consolas, Courier New, ...); pass `--font NAME` with an exact name from
 column wrapping, cursor placement, and code syntax highlighting all
 assume every glyph is the same width.
 
+## Demo
+
+![TokenReel demo](demo/token_reel.gif)
+
+Generated from [`demo/exchange.md`](demo/exchange.md) via:
+
+```bash
+token_reel -m demo/exchange.md --tps 14 --ttft 0.8 -o demo/token_reel.gif
+```
+
 ## Install
 
 ```bash
